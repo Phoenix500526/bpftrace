@@ -5,7 +5,7 @@ namespace bpftrace {
 std::string logtype_str(LogType t)
 {
   switch (t) {
-    // clang-format off
+      // clang-format off
     case LogType::DEBUG   : return "";
     case LogType::V1      : return "";
     case LogType::HINT    : return "HINT: ";
@@ -39,26 +39,43 @@ void Log::take_input(LogType type,
                      std::ostream& out,
                      std::string&& input)
 {
-  auto print_out = [&]() { out << logtype_str(type) << input << std::endl; };
-
   if (loc) {
     if (src_.empty()) {
       std::cerr << "Log: cannot resolve location before calling set_source()."
                 << std::endl;
-      print_out();
+      out << log_format_output(type, std::move(input));
     } else if (loc->begin.line == 0) {
       std::cerr << "Log: invalid location." << std::endl;
-      print_out();
+      out << log_format_output(type, std::move(input));
     } else if (loc->begin.line > loc->end.line) {
       std::cerr << "Log: loc.begin > loc.end: " << loc->begin << ":" << loc->end
                 << std::endl;
-      print_out();
+      out << log_format_output(type, std::move(input));
     } else {
       log_with_location(type, loc.value(), out, input);
     }
   } else {
-    print_out();
+    out << log_format_output(type, std::move(input));
   }
+}
+
+std::string Log::log_format_output(LogType type, std::string&& input)
+{
+  if (!is_colorize_) {
+    return logtype_str(type) + std::move(input) + '\n';
+  }
+  std::string color;
+  switch (type) {
+    case LogType::ERROR:
+      color = LogColor::RED;
+      break;
+    case LogType::WARNING:
+      color = LogColor::YELLOW;
+      break;
+    default:
+      return logtype_str(type) + std::move(input) + '\n';
+  }
+  return color + logtype_str(type) + std::move(input) + LogColor::RESET + '\n';
 }
 
 const std::string Log::get_source_line(unsigned int n)
