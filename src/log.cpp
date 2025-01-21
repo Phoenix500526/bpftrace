@@ -99,6 +99,19 @@ void Log::log_with_location(LogType type,
                             std::ostream& out,
                             const std::string& m)
 {
+  if (is_colorize_) {
+    switch (type) {
+      case LogType::ERROR:
+        out << LogColor::RED;
+        break;
+      case LogType::WARNING:
+        out << LogColor::YELLOW;
+        break;
+      default:
+        break;
+    }
+  }
+
   if (filename_.size()) {
     out << filename_ << ":";
   }
@@ -114,8 +127,10 @@ void Log::log_with_location(LogType type,
      <filename>:<start_line>-<end_line>: ERROR: <message>
   */
   if (l.begin.line < l.end.line) {
-    out << l.begin.line << "-" << l.end.line << ": " << typestr << msg
-        << std::endl;
+    out << l.begin.line << "-" << l.end.line << ": " << typestr << msg << std::endl;
+    if (is_colorize_ && (type == LogType::ERROR || type == LogType::WARNING)) {
+      out << LogColor::RESET;
+    }
     return;
   }
 
@@ -138,8 +153,12 @@ void Log::log_with_location(LogType type,
   // for bpftrace::position, valid line# starts from 1
   std::string srcline = get_source_line(l.begin.line - 1);
 
-  if (srcline == "")
+  if (srcline == "") {
+    if (is_colorize_ && (type == LogType::ERROR || type == LogType::WARNING)) {
+      out << LogColor::RESET;
+    }
     return;
+  }
 
   // To get consistent printing all tabs will be replaced with 4 spaces
   for (auto c : srcline) {
@@ -160,6 +179,9 @@ void Log::log_with_location(LogType type,
     } else {
       out << marker;
     }
+  }
+  if (is_colorize_ && (type == LogType::ERROR || LogType::WARNING)) {
+    out << LogColor::RESET;
   }
   out << std::endl;
 }
