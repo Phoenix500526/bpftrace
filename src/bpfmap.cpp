@@ -112,7 +112,7 @@ int BpfMap::update_elem(const void *key, const void *value) const
 
 int BpfMap::lookup_elem(const void *key, void *value) const
 {
-  auto err = bpf_map_update_elem(fd(), key, value, BPF_ANY);
+  auto err = bpf_map_lookup_elem(fd(), key, value);
   if (err != 0)
     return err;
   return 0;

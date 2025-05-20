@@ -1279,22 +1279,13 @@ std::string BPFtrace::get_stack(int64_t stackid,
   struct stack_key stack_key = { .stackid = stackid,
                                  .nr_stack_frames = nr_stack_frames };
   auto stack_trace = std::vector<uint64_t>(stack_type.limit);
-  // auto map = bytecode_.getMap(stack_type.name());
-  // int err = map.lookup_elem(&stack_key, stack_trace.data());
-  // if (err) {
-  //   LOG(ERROR) << "failed to look up stack id: " << stackid
-  //              << " stack length: " << nr_stack_frames << " (pid " << pid
-  //              << "): " << err;
-  //   return "";
-  // }
-  int err = bpf_lookup_elem(bytecode_.getMap(stack_type.name()).fd(),
-                            &stack_key,
-                            stack_trace.data());
+  auto map = bytecode_.getMap(stack_type.name());
+  int err = map.lookup_elem(&stack_key, stack_trace.data());
   if (err) {
-    // ignore EFAULT errors: eg, kstack used but no kernel stack
     LOG(ERROR) << "failed to look up stack id: " << stackid
                << " stack length: " << nr_stack_frames << " (pid " << pid
                << "): " << err;
+    return "";
   }
 
   std::ostringstream stack;
