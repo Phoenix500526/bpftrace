@@ -5,15 +5,22 @@
 #include <string_view>
 
 #include <bpf/libbpf.h>
-#include <linux/bpf.h>
 
-#include "types.h"
+#include "map_info.h"
 
 namespace libbpf {
 #include "libbpf/bpf.h"
 } // namespace libbpf
 
 namespace bpftrace {
+
+using KeyType = std::vector<uint8_t>;
+using KeyVec = std::vector<KeyType>;
+using ValueType = std::vector<uint8_t>;
+using KVPairVec = std::vector<std::pair<KeyType, ValueType>>;
+using BucketUnit = uint64_t;
+using BucketType = std::vector<BucketUnit>;
+using HistogramMap = std::map<KeyType, BucketType>;
 
 class BpfMap {
 public:
@@ -44,14 +51,22 @@ public:
   libbpf::bpf_map_type type() const;
   const std::string &bpf_name() const;
   std::string name() const;
-  uint32_t key_size() const;
-  uint32_t value_size() const;
   uint32_t max_entries() const;
 
   bool is_stack_map() const;
   bool is_per_cpu_type() const;
   bool is_clearable() const;
   bool is_printable() const;
+
+  KeyVec collect_keys() const;
+  int collect_kvs(int nvalues, KVPairVec &values_by_key) const;
+  int collect_histogram_data(const MapInfo &map_info,
+                             int nvalues,
+                             HistogramMap &histogram_map) const;
+  int zero_out(KeyVec &keys, int nvalues) const;
+  int delete_by_keys(KeyVec &keys) const;
+  int update_elem(const void *key, const void *value) const;
+  int lookup_elem(const void *key, void *value) const;
 
 private:
   struct bpf_map *bpf_map_;
