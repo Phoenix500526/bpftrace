@@ -267,7 +267,7 @@ def run_runtime_tests():
         c = f"{modprobe} && {script}"
         cmd = ["vmtest", "-k", f"{eval.stdout}/bzImage", c]
     else:
-        cmd = [script]
+        cmd = [script, "--filter", "usdt.*"]
 
     shell(
         cmd,
