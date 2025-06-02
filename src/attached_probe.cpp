@@ -828,9 +828,11 @@ Result<std::unique_ptr<AttachedUSDTProbe>> AttachedUSDTProbe::make(
     char bpf_error_msg[128];
     int res = libbpf_strerror(errno, bpf_error_msg, sizeof(bpf_error_msg));
     if (res) {
+      LOG(ERROR) << "Failed to attach usdt probe: " << std::strerror(errno);
       return make_error<AttachError>("Failed to attach usdt probe: " +
                                      std::string(std::strerror(errno)));
     } else {
+      LOG(ERROR) << "Failed to attach usdt probe: " << bpf_error_msg;
       return make_error<AttachError>("Failed to attach usdt probe: " +
                                      std::string(bpf_error_msg));
     }
